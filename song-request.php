@@ -8,7 +8,6 @@ Author: SOYoutuber
 Author URI: https://soyoutuber.com/
 Text Domain: song-request
 */
-<?php
 // Agregar una página de configuración para el plugin
 function song_request_settings_page() {
     add_options_page(
