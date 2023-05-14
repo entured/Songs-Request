@@ -198,3 +198,147 @@ if ($fn !== false) {
 }
 }
 add_action('init', 'song_request_process_form');
+// Agregar el formulario de solicitud como widget
+class Song_Request_Form_Widget extends WP_Widget {
+    public function __construct() {
+        parent::__construct(
+            'song_request_form_widget',
+            'Song Request Form',
+            array('description' => 'Displays the Song Request Form')
+        );
+    }
+
+    public function widget($args, $instance) {
+        echo $args['before_widget'];
+        echo $args['before_title'] . apply_filters('widget_title', $instance['title']) . $args['after_title'];
+        echo do_shortcode('[get_song_request_form]');
+        echo $args['after_widget'];
+    }
+
+    public function form($instance) {
+        $title = isset($instance['title']) ? $instance['title'] : '';
+        ?>
+        <p>
+            <label for="<?php echo $this->get_field_id('title'); ?>">Title:</label>
+            <input class="widefat" id="<?php echo $this->get_field_id('title'); ?>" name="<?php echo $this->get_field_name('title'); ?>" type="text" value="<?php echo esc_attr($title); ?>" />
+        </p>
+        <?php
+    }
+
+    public function update($new_instance, $old_instance) {
+        $instance = array();
+        $instance['title'] = (!empty($new_instance['title'])) ? sanitize_text_field($new_instance['title']) : '';
+        return $instance;
+    }
+}
+add_action('widgets_init', function() {
+    register_widget('Song_Request_Form_Widget');
+});
+// Agregar el formulario de solicitud como bloque
+function song_request_block_render() {
+    ob_start();
+    echo '<div class="song-request-block">';
+    echo do_shortcode('[get_song_request_form]');
+    echo '</div>';
+    return ob_get_clean();
+}
+
+function song_request_block_init() {
+    $args = array(
+        'name'            => 'Song Request',
+        'title'           => 'Song Request',
+        'render_callback' => 'song_request_block_render',
+        'category'        => 'widgets',
+        'icon'            => 'admin-comments',
+        'keywords'        => array( 'song', 'request', 'music' ),
+    );
+    register_block_type( 'song-request/song-request-block', $args );
+}
+add_action( 'init', 'song_request_block_init' );
+// Obtener el formulario de solicitud como contenido procesado por el shortcode
+function get_song_request_form() {
+    ob_start();
+    song_request_form_shortcode();
+    return ob_get_clean();
+}
+add_shortcode('get_song_request_form', 'get_song_request_form');
+
+// Agregar la función para renderizar el formulario de solicitud como bloque de Gutenberg
+function render_song_request_form_block($attributes) {
+    return get_song_request_form();
+}
+register_block_type('song-request/song-request-form', array(
+    'render_callback' => 'render_song_request_form_block',
+));
+// Función para obtener las opciones de configuración
+function get_song_request_options() {
+    return get_option('song_request_options', array(
+        'rb_server' => '127.0.0.1',
+        'rb_port' => '9000',
+        'rb_password' => '7bNR5UK',
+        'rb_library' => 'music',
+    ));
+}
+
+// Lógica para procesar el formulario y enviar la solicitud a RadioBOSS
+function song_request_process_form() {
+    if (isset($_POST['type']) && $_POST['type'] === 'request') {
+        $options = get_song_request_options();
+        $rb_server = isset($options['rb_server']) ? $options['rb_server'] : '';
+        $rb_port = isset($options['rb_port']) ? $options['rb_port'] : '';
+        $rb_password = isset($options['rb_password']) ? $options['rb_password'] : '';
+        $rb_library = isset($options['rb_library']) ? $options['rb_library'] : '';
+
+        $artist = mb_strtolower(trim($_POST['artist']));
+        $title = mb_strtolower(trim($_POST['title']));
+
+        if (empty($artist) && empty($title)) {
+            echo 'No artist or title entered.';
+            return;
+        }
+
+        $rb_api = "http://$rb_server:$rb_port?pass=$rb_password";
+
+        $library_raw = file_get_contents("$rb_api&action=library&filename=" . urlencode($rb_library));
+        if ($library_raw === false) {
+            echo 'Song request failed: unable to load music library.';
+            return;
+        }
+
+        $xml = simplexml_load_string($library_raw);
+        if ($xml === false) {
+            echo 'Song request failed: unable to parse music library XML data.';
+            return;
+        }
+
+        $fn = false;
+
+        foreach ($xml as $x) {
+            if ($x->getName() !== 'Track') {
+                continue;
+            }
+
+            $found = (empty($artist) || (mb_strtolower((string)$x['artist']) === $artist)) &&
+                     (empty($title) || (mb_strtolower((string)$x['title']) === $title));
+
+            if ($found) {
+                $fn = (string)$x['filename'];
+                break;
+            }
+        }
+
+        if ($fn !== false) {
+            $msg = isset($_POST['message']) ? $_POST['message'] : '';
+            $res = file_get_contents("$rb_api&action=songrequest&filename=" . urlencode($fn) . '&message=' . urlencode($msg));
+
+            if ($res === 'OK') {
+                echo 'Song requested successfully!';
+            } else {
+                echo 'An error occurred while adding song request.';
+            }
+        } else {
+            echo 'Requested song not found in the music library.';
+        }
+    }
+}
+add_action('init', 'song_request_process_form');
