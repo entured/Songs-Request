@@ -3,7 +3,7 @@
 Plugin Name: Song Request
 Plugin URI: https://soyoutuber.com/song-request
 Description: Plugin para solicitar canciones en la emisora de radio.
-Version: 0.0.2
+Version: 0.0.3
 Author: SOYoutuber
 Author URI: https://soyoutuber.com/
 Text Domain: song-request
