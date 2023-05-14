@@ -117,8 +117,8 @@ echo '<input type="text" name="song_request_options[rb_library]" value="' . esc_
 
 // Agregar los estilos y scripts del plugin
 function song_request_enqueue_scripts() {
-wp_enqueue_style('song-request-style', plugin_dir_url(FILE) . 'css/style.css');
-wp_enqueue_script('song-request-script', plugin_dir_url(FILE) . 'js/script.js', array('jquery'), '1.0.0', true);
+wp_enqueue_style('song-request-style', plugin_dir_url(__FILE__) . 'css/style.css');
+wp_enqueue_script('song-request-script', plugin_dir_url(__FILE__) . 'js/script.js', array('jquery'), '1.0.0', true);
 }
 add_action('wp_enqueue_scripts', 'song_request_enqueue_scripts');
 
