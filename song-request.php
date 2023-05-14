@@ -3,7 +3,7 @@
 Plugin Name: Song Request
 Plugin URI: https://soyoutuber.com/song-request
 Description: Plugin para solicitar canciones en la emisora de radio.
-Version: 0.0.4
+Version: 0.0.5
 Author: SOYoutuber
 Author URI: https://soyoutuber.com/
 Text Domain: song-request
@@ -198,75 +198,10 @@ if ($fn !== false) {
 }
 }
 add_action('init', 'song_request_process_form');
-// Agregar el formulario de solicitud como widget
-class Song_Request_Form_Widget extends WP_Widget {
-    public function __construct() {
-        parent::__construct(
-            'song_request_form_widget',
-            'Song Request Form',
-            array('description' => 'Displays the Song Request Form')
-        );
-    }
-
-    public function widget($args, $instance) {
-        echo $args['before_widget'];
-        echo $args['before_title'] . apply_filters('widget_title', $instance['title']) . $args['after_title'];
-        echo do_shortcode('[get_song_request_form]');
-        echo $args['after_widget'];
-    }
-
-    public function form($instance) {
-        $title = isset($instance['title']) ? $instance['title'] : '';
-        ?>
-        <p>
-            <label for="<?php echo $this->get_field_id('title'); ?>">Title:</label>
-            <input class="widefat" id="<?php echo $this->get_field_id('title'); ?>" name="<?php echo $this->get_field_name('title'); ?>" type="text" value="<?php echo esc_attr($title); ?>" />
-        </p>
-        <?php
-    }
-
-    public function update($new_instance, $old_instance) {
-        $instance = array();
-        $instance['title'] = (!empty($new_instance['title'])) ? sanitize_text_field($new_instance['title']) : '';
-        return $instance;
-    }
+// AJAX callback para procesar la solicitud de canción
+function song_request_submit_callback() {
+  song_request_process_form();
+  wp_die(); // Terminar la ejecución de la solicitud AJAX
 }
-add_action('widgets_init', function() {
-    register_widget('Song_Request_Form_Widget');
-});
-// Agregar el formulario de solicitud como bloque
-function song_request_block_render() {
-    ob_start();
-    echo '<div class="song-request-block">';
-    echo do_shortcode('[get_song_request_form]');
-    echo '</div>';
-    return ob_get_clean();
-}
-
-function song_request_block_init() {
-    $args = array(
-        'name'            => 'Song Request',
-        'title'           => 'Song Request',
-        'render_callback' => 'song_request_block_render',
-        'category'        => 'widgets',
-        'icon'            => 'admin-comments',
-        'keywords'        => array( 'song', 'request', 'music' ),
-    );
-    register_block_type( 'song-request/song-request-block', $args );
-}
-add_action( 'init', 'song_request_block_init' );
-// Obtener el formulario de solicitud como contenido procesado por el shortcode
-function get_song_request_form() {
-    ob_start();
-    song_request_form_shortcode();
-    return ob_get_clean();
-}
-add_shortcode('get_song_request_form', 'get_song_request_form');
-
-// Agregar la función para renderizar el formulario de solicitud como bloque de Gutenberg
-function render_song_request_form_block($attributes) {
-    return get_song_request_form();
-}
-register_block_type('song-request/song-request-form', array(
-    'render_callback' => 'render_song_request_form_block',
-));
+add_action('wp_ajax_song_request_submit', 'song_request_submit_callback');
+add_action('wp_ajax_nopriv_song_request_submit', 'song_request_submit_callback');
