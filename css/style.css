@@ -1,0 +1,40 @@
+/* Estilos para el formulario de solicitud */
+.song-request-form {
+    font-family: Arial, sans-serif;
+    font-size: 14px;
+}
+
+.song-request-form label {
+    display: block;
+    margin-bottom: 10px;
+}
+
+.song-request-form input[type="text"],
+.song-request-form textarea {
+    width: 100%;
+    padding: 5px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+.song-request-form button {
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 16px;
+    cursor: pointer;
+    border-radius: 4px;
+}
+
+.song-request-form button:hover {
+    background-color: #45a049;
+}
+
+/* Estilos para el bloque de solicitud en Gutenberg */
+.song-request-block {
+    margin-bottom: 20px;
+}
